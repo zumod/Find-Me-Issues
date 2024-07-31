@@ -1,24 +1,35 @@
-import { createContext, useState } from "react";
+import { createContext, useState, useEffect } from "react";
 
-export const ThemeContext = createContext()
+export const ThemeContext = createContext();
 
-//Theme modes 
-const light = {mode: 'light', color: 'black', bg: 'white'}
-const dark = {mode: 'dark', color: 'white', bg: '#020300'}
+// Theme modes
+const light = { mode: 'light', color: 'black', bg: 'white' };
+const dark = { mode: 'dark', color: 'white', bg: '#020300' };
 
-//Get the system theme
-let systemTheme = {}
-window.matchMedia('(prefers-color-scheme: dark)').matches ? systemTheme = dark : systemTheme = light
+// Get the system theme
+const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? dark : light;
 
 export function ThemeProvider(props) {
-    const [theme, setTheme] = useState(systemTheme)
+    // Get theme from localStorage or default to system theme
+    const [theme, setTheme] = useState(() => {
+        const savedTheme = localStorage.getItem('theme');
+        return savedTheme ? JSON.parse(savedTheme) : systemTheme;
+    });
 
-    //Handle theme change
+    // Handle theme change
     function changeTheme() {
-        theme.mode === 'light' ? setTheme(dark) : setTheme(light)
+        const newTheme = theme.mode === 'light' ? dark : light;
+        setTheme(newTheme);
     }
 
-    return <ThemeContext.Provider value={{theme: theme, changeTheme: changeTheme}}>
-        {props.children}
-    </ThemeContext.Provider>
+    // Save the theme to localStorage whenever it changes
+    useEffect(() => {
+        localStorage.setItem('theme', JSON.stringify(theme));
+    }, [theme]);
+
+    return (
+        <ThemeContext.Provider value={{ theme, changeTheme }}>
+            {props.children}
+        </ThemeContext.Provider>
+    );
 }
